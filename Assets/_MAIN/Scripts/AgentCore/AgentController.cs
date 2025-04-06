@@ -52,7 +52,7 @@ public class AgentController : Agent
         logger = GetComponent<AgentStatsLogger>();
         rewardSystem = GetComponent<RewardSystem>();
         roomTracker = GetComponent<RoomTracker>();
-        targetManager = GetComponent<TargetManager>();
+        //targetManager = GetComponent<TargetManager>();
         eventVisualizer = GetComponent<EventVisualizer>();
         memory = GetComponent<MemoryModule>();
     }
@@ -69,8 +69,8 @@ public class AgentController : Agent
     public override void OnEpisodeBegin()
     {
         episodeCount++;
-        successCount = 0;
-        lifetimeReward = 0f;
+        //successCount = 0;
+        //lifetimeReward = 0f;
         timeLimit = Time.time + timeForEpisode;
 
         transform.position = initialPosition;
@@ -108,8 +108,6 @@ public class AgentController : Agent
 
     public override void OnActionReceived(ActionBuffers actions)
     {
-        Debug.Log("🧠 Action received!");
-
         movement.Move(actions);
     }
 

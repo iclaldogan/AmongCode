@@ -5,7 +5,7 @@ public class TargetManager : MonoBehaviour
 {
     [Header("Target Settings")]
     public GameObject targetPrefab;
-    public int targetCount = 3;
+    public int targetCount = 6;
     public Transform environmentRoot;
     public List<Collider> spawnZones = new List<Collider>();
 
@@ -14,9 +14,23 @@ public class TargetManager : MonoBehaviour
     public int TargetCount => targetCount;
     public List<GameObject> SpawnedTargets => spawnedTargets;
 
+    void Awake()
+    {
+        if (targetPrefab == null)
+        {
+            targetPrefab = GameObject.Find("Target_Prefab")?.GetComponent<GameObject>();
+        }
+    }
+
     public void SpawnTargets()
     {
         RemoveAllTargets();
+
+        if (targetPrefab == null)
+        {
+            Debug.LogError("❌ Target prefab is missing in TargetManager!");
+            return;
+        }
 
         for (int i = 0; i < targetCount; i++)
         {
@@ -27,9 +41,10 @@ public class TargetManager : MonoBehaviour
             newTarget.transform.position = spawnPos;
 
             spawnedTargets.Add(newTarget);
-            Debug.Log($"🎯 Target {i + 1} spawned at {spawnPos}");
+            //Debug.Log($"🎯 Target {i + 1} spawned at {spawnPos}");
         }
     }
+
 
     private Vector3 GetValidSpawnLocation()
     {

@@ -4,6 +4,9 @@ using Unity.MLAgents.Sensors;
 
 public class MemoryModule : MonoBehaviour
 {
+    private Dictionary<string, float> lastSeenTimestamps = new Dictionary<string, float>();
+    public float tagMemoryCooldown = 10f; // seconds
+
     [System.Serializable]
     public class MemoryEntry
     {
@@ -55,10 +58,22 @@ public class MemoryModule : MonoBehaviour
                 float distance = hit.distance / rayLength; // Normalize [0,1]
                 string tag = hit.collider.tag;
 
+                // For observation input
                 float isPlayer = (tag == "crewmate" || tag == "imposter") ? 1f : 0f;
-
                 sensor.AddObservation(distance);
                 sensor.AddObservation(isPlayer);
+
+                // Record memory for important tags only
+                // Record memory for important tags only
+                if (tag == "crewmate" || tag == "imposter" || tag == "button" || tag == "deadbody")
+                {
+                    if (!lastSeenTimestamps.ContainsKey(tag) || Time.time - lastSeenTimestamps[tag] > tagMemoryCooldown)
+                    {
+                        memoryLog.Add(new MemoryEntry("self", $"Seen: {tag}", Time.time));
+                        lastSeenTimestamps[tag] = Time.time;
+                    }
+                }
+
 
                 if (debugDrawRays)
                     Debug.DrawRay(origin.position, dir * hit.distance, Color.green);
@@ -67,23 +82,31 @@ public class MemoryModule : MonoBehaviour
             {
                 sensor.AddObservation(1f); // max distance
                 sensor.AddObservation(0f); // no player
+
                 if (debugDrawRays)
                     Debug.DrawRay(origin.position, dir * rayLength, Color.red);
             }
         }
-    }
 
+        // Optional: keep memory log size under control
+        if (memoryLog.Count > 200)
+            memoryLog.RemoveAt(0);
+    }
 
 
     public void RecordRoomEntry(Collider roomOrCorridor)
     {
-        // Optional: for remembering where Alfred went
         memoryLog.Add(new MemoryEntry("self", roomOrCorridor.name, Time.time));
     }
 
-    private string GetCurrentRoomName(Vector3 position)
+    public void RecordSightedObject(string tagName, float distance)
     {
-        // Optional helper — returns closest room or collider
+        memoryLog.Add(new MemoryEntry("self", $"Seen: {tagName}", Time.time));
+    }
+
+
+    public string GetCurrentRoomName(Vector3 position)
+    {
         Collider[] hits = Physics.OverlapSphere(position, 1f);
         foreach (var col in hits)
         {
@@ -91,5 +114,11 @@ public class MemoryModule : MonoBehaviour
                 return col.name;
         }
         return "Unknown";
+    }
+
+    // MemoryStats method for HUD or debug logs
+    public int MemoryStats()
+    {
+        return memoryLog.Count;
     }
 }

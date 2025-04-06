@@ -5,7 +5,7 @@ using UnityEngine;
 public class RoomTracker : MonoBehaviour
 {
     [Header("Room Settings")]
-    public int totalRoomCount = 4;
+    public int totalRoomCount = 10;
     public List<Renderer> roomVisuals = new List<Renderer>();
 
     [Header("Overstay Settings")]
@@ -21,10 +21,10 @@ public class RoomTracker : MonoBehaviour
     private string currentTag = "";
     private Dictionary<string, int> visitCounts = new Dictionary<string, int>();
     private Dictionary<string, float> entryTimes = new Dictionary<string, float>();
+    private Dictionary<string, float> roomDurations = new Dictionary<string, float>();
     private bool allRoomsVisited = false;
 
     public int TotalRoomCount => totalRoomCount;
-
 
     private void Awake()
     {
@@ -36,6 +36,7 @@ public class RoomTracker : MonoBehaviour
     {
         visitCounts.Clear();
         entryTimes.Clear();
+        roomDurations.Clear();
         currentRoom = "";
         currentTag = "";
         allRoomsVisited = false;
@@ -48,11 +49,18 @@ public class RoomTracker : MonoBehaviour
 
         if (currentRoom == areaName) return;
 
+        if (!string.IsNullOrEmpty(currentRoom) && entryTimes.ContainsKey(currentRoom))
+        {
+            float timeSpent = Time.time - entryTimes[currentRoom];
+            if (!roomDurations.ContainsKey(currentRoom))
+                roomDurations[currentRoom] = 0f;
+            roomDurations[currentRoom] += timeSpent;
+        }
+
         currentRoom = areaName;
         currentTag = areaTag;
         entryTimes[areaName] = Time.time;
 
-        // First-time entry
         if (!visitCounts.ContainsKey(areaName))
         {
             visitCounts[areaName] = 1;
@@ -64,7 +72,7 @@ public class RoomTracker : MonoBehaviour
             }
             else if (areaTag == "corridor")
             {
-                rewardSystem.ApplyReward(4f); // small corridor reward
+                rewardSystem.ApplyReward(4f);
                 agent.eventVisualizer?.FlashColor(Color.cyan);
             }
 
@@ -72,7 +80,6 @@ public class RoomTracker : MonoBehaviour
         }
         else
         {
-            // Revisits
             visitCounts[areaName]++;
             int visitCount = visitCounts[areaName];
             float penalty = -2f * (visitCount - 3);
@@ -87,7 +94,6 @@ public class RoomTracker : MonoBehaviour
             }
         }
 
-        // All rooms visited?
         if (!allRoomsVisited && GetVisitedRoomCount() >= totalRoomCount)
         {
             allRoomsVisited = true;
@@ -112,7 +118,7 @@ public class RoomTracker : MonoBehaviour
             rewardSystem.ApplyReward(penalty);
             agent.eventVisualizer?.FlashColor(color);
             Debug.Log($"🚨 Overstay in {currentRoom} → {penalty}");
-            entryTimes[currentRoom] = Time.time; // reset timer
+            entryTimes[currentRoom] = Time.time;
         }
     }
 
@@ -128,7 +134,6 @@ public class RoomTracker : MonoBehaviour
         }
     }
 
-    // Called by HUD or AgentController
     public string GetCurrentRoomName() => currentRoom;
     public float GetCurrentRoomStayTime()
     {
@@ -141,4 +146,5 @@ public class RoomTracker : MonoBehaviour
 
     public int GetVisitedRoomCount() => visitCounts.Keys.Count;
     public bool AllRoomsVisited() => allRoomsVisited;
+    public Dictionary<string, float> GetRoomDurations() => roomDurations;
 }

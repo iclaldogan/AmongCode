@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System;
 
 public class AgentStatsLogger : MonoBehaviour
 {
@@ -12,7 +13,7 @@ public class AgentStatsLogger : MonoBehaviour
 
     void Start()
     {
-        if(agent == null)
+        if (agent == null)
         {
             agent = GetComponent<AgentController>();
         }
@@ -22,7 +23,7 @@ public class AgentStatsLogger : MonoBehaviour
 
         if (!File.Exists(logFilePath))
         {
-            File.WriteAllText(logFilePath, "Episode, Duration, TotalReward, TargetsCollected, RoomVisited, EpisodeEndReason\n");
+            File.WriteAllText(logFilePath, "Episode, Timestamp, Duration, TotalReward, TargetsCollected, RoomVisited, EpisodeEndReason");
         }
     }
 
@@ -40,13 +41,13 @@ public class AgentStatsLogger : MonoBehaviour
     public void EndEpisode(string reason)
     {
         float duration = Time.time - episodeStartTime;
-
         int collected = agent.TargetCount - agent.SpawnedTargetCount;
-        bool success = (collected == agent.TargetCount && agent.GetVisitedRoomCount() == agent.TotalRoomCount);
 
-
-        string logLine = $"{episodeCount}, {duration:F2}, {totalReward:F2}, {collected}, {agent.GetVisitedRoomCount()}, {reason}";
+        string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        string logLine = $"{episodeCount}, {timestamp}, {duration:F2}, {totalReward:F2}, {collected}, {agent.GetVisitedRoomCount()}, {reason}";
         File.AppendAllText(logFilePath, logLine + "\n");
+        File.SetLastWriteTime(logFilePath, DateTime.Now);
+
 
         episodeCount++;
     }

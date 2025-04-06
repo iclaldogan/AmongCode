@@ -19,8 +19,6 @@ public class MovementHandler : MonoBehaviour
 
         rb.MovePosition(transform.position + transform.forward * moveForward * moveSpeed * Time.deltaTime);
         transform.Rotate(0f, rotate * moveSpeed, 0f, Space.Self);
-
-        Debug.Log($"➡️ MoveForward: {moveForward}, Rotate: {rotate}");
     }
 
     public void ManualMove(ActionSegment<float> actions)
